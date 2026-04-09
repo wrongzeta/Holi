@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💌</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #ec94e159;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+  }
+  #app {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .progress {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 2.5rem;
+  }
+  .pip {
+    height: 4px;
+    border-radius: 2px;
+    background: #f0c0c0;
+    flex: 1;
+    transition: background 0.3s;
+  }
+  .pip.done { background: #e24b4a; }
+  .slide {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    width: 100%;
+    background: #ffffff;
+    padding: 28px 24px;
+    border-radius: 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+    animation: fadeUp 0.45s ease forwards;
+  }
+  .slide.active { display: flex; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .slide-emoji { font-size: 52px; }
+  .slide-text {
+    font-size: 20px;
+    line-height: 1.65;
+    color: #2c2c2a;
+  }
+  .slide-text.pregunta {
+    font-size: 26px;
+    font-weight: 600;
+    color: #a32d2d;
+  }
+  .btn-next {
+    margin-top: 8px;
+    background: transparent;
+    color: #2c2c2a;
+    border: 1px solid #ccc;
+    border-radius: 50px;
+    padding: 12px 32px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .btn-next:hover { background: #f5f5f5; transform: scale(1.04); }
+  .btn-next:active { transform: scale(0.97); }
+  .btns-finales {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .btn-si {
+    background: transparent;
+    border: 1px solid;
+    border-radius: 50px;
+    padding: 13px 36px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .btn-si:hover { transform: scale(1.05); }
+  .btn-si:active { transform: scale(0.97); }
+  .btn-si.verde {
+    color: #2e7d32;
+    border-color: #2e7d32;
+  }
+  .btn-si.verde:hover { background: #f0fff1; }
+  .btn-si.rojo {
+    color: #e24b4a;
+    border-color: #e24b4a;
+  }
+  .btn-si.rojo:hover { background: #fff0f0; }
+  .resultado {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+    animation: popIn 0.5s ease;
+  }
+  .resultado.show { display: flex; }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.7); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .res-emoji { font-size: 58px; }
+  .res-titulo { font-size: 26px; font-weight: 700; color: #a32d2d; }
+  .res-sub { font-size: 15px; color: #888; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="progress" id="progress"></div>
+  <div id="slides-wrap" style="width:100%;display:flex;flex-direction:column;align-items:center;"></div>
+  <div class="resultado" id="resultado">
+    <div class="res-emoji" id="res-emoji"></div>
+    <div class="res-titulo" id="res-titulo"></div>
+    <div class="res-sub" id="res-sub"></div>
+  </div>
+</div>
+
+<script>
+
+// ============================================================
+//  ✏️  TUS MENSAJES — edita solo el texto, emoji y delay
+//  delay = milisegundos que espera antes de avanzar SOLO si
+//  pones autoAvanzar: true (si no, aparece botón "Siguiente")
+// ============================================================
+const slides = [
+  { emoji: "",  text: "Holiiiii" },
+  { emoji: "",  text: "Primero que nada espero que te hayan gustado las flores :D" },
+  { emoji: "", text: "Queria aprovechar tu ultimo sabado en la empresa para tomar un tiempo a solas contigo" },
+  { emoji: "",  text: "Llevamos poco mas de 1 mes conociendonos y genuinamente me enamore de ti, de todo lo que eres. me encanta verte, abrazarte, escucharte, besarte cualquier cosa me parece mejor si estoy contigo." },
+  { emoji: "",  text: "Lo hablamos hace no mucho que juzgue a daniel por ser muy afanado pero yo cai aun mas rapido JKAHDKAJD realmente contigo siento una conexion muy bonita que no se describir en palabras pero de la que estoy seguro que quiero que sea permanente" },
+  { emoji: "",  text: "Me encanta estar contigo y quiero que esto siga siendo así para siempre. por que me haces MUUYYYY feliz demasiado y me generas una paz que no habia sentido desde niño probablemente" },
+  { emoji: "",  text: "Por eso y mas queria aprovechar el momento a solas para poder de una forma acorde a mi preguntarte" },
+  { emoji: "",  text: "¿Quieres ser mi novia?", pregunta: true },  // <- último slide, no tocar el pregunta:true
+];
+
+// ============================================================
+//  ✏️  PANTALLA FINAL (cuando dan clic en cualquier "Sí")
+// ============================================================
+const final = {
+  emoji:    "TQM 💗",
+  titulo:   "¡Sabía que dirías que sí(no es como que hubiera opción!",
+  subtitulo: "Conocerte es la mejor casualidad que me ha pasado en años. 💗",
+};
+
+// ============================================================
+//  lógica — no tocar de aquí para abajo
+// ============================================================
+document.getElementById('res-emoji').textContent  = final.emoji;
+document.getElementById('res-titulo').textContent  = final.titulo;
+document.getElementById('res-sub').textContent     = final.subtitulo;
+
+const wrap     = document.getElementById('slides-wrap');
+const prog     = document.getElementById('progress');
+const resultado = document.getElementById('resultado');
+let current = 0;
+
+slides.forEach((_, i) => {
+  const pip = document.createElement('div');
+  pip.className = 'pip';
+  pip.id = 'pip-' + i;
+  prog.appendChild(pip);
+});
+
+function renderSlide(i) {
+  wrap.innerHTML = '';
+  const s = slides[i];
+  const div = document.createElement('div');
+  div.className = 'slide active';
+
+  const em = document.createElement('div');
+  em.className = 'slide-emoji';
+  em.textContent = s.emoji;
+
+  const txt = document.createElement('div');
+  txt.className = s.pregunta ? 'slide-text pregunta' : 'slide-text';
+  txt.textContent = s.text;
+
+  div.appendChild(em);
+  div.appendChild(txt);
+
+  if (s.pregunta) {
+    const btns = document.createElement('div');
+    btns.className = 'btns-finales';
+
+    const b1 = document.createElement('button');
+    b1.className = 'btn-si verde';
+    b1.textContent = 'Sí';
+    b1.onclick = win;
+
+    const b2 = document.createElement('button');
+    b2.className = 'btn-si rojo';
+    b2.textContent = 'Sí pero en rojo';
+    b2.onclick = win;
+
+    btns.appendChild(b1);
+    btns.appendChild(b2);
+    div.appendChild(btns);
+  } else {
+    const btn = document.createElement('button');
+    btn.className = 'btn-next';
+    btn.textContent = i === slides.length - 2 ? 'Siguiente :3' : 'Siguiente →';
+    btn.onclick = () => { current++; updatePips(); renderSlide(current); };
+    div.appendChild(btn);
+  }
+
+  wrap.appendChild(div);
+}
+
+function updatePips() {
+  slides.forEach((_, i) => {
+    document.getElementById('pip-' + i).classList.toggle('done', i < current);
+  });
+}
+
+function win() {
+  wrap.style.display   = 'none';
+  prog.style.display   = 'none';
+  resultado.classList.add('show');
+}
+
+updatePips();
+renderSlide(0);
+</script>
+</body>
+</html>
